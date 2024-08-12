@@ -1,0 +1,29 @@
+version: "3.9"
+services:
+  rtmp:
+    build: ./rtmp
+    ports:
+      - "1935:1935"
+      - "8080:8080"
+    container_name: rtmp_server
+    volumes:
+      - ./data:/tmp/hls
+  
+  auth:
+    build: ./backend
+    container_name: auth_server
+    ports:
+      - "4000:4000"
+    depends_on:
+      - rtmp
+
+  prom-server:
+    image: prom/prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./backend/prometheus.yml:/etc/prometheus/prometheus.yml
+    depends_on:
+      - auth  
+    
+      
