@@ -129,11 +129,11 @@ services:
     build: ./backend
     container_name: backend_server
     environment:
-      - PORT=4000
+      - PORT=5000
       - MONGO_URI=${MONGO_URI}
       - JWT_SECRET=${JWT_SECRET}
     ports:
-      - "4000:4000"
+      - "5000:5000"
     depends_on:
       - rtmp
 
@@ -153,7 +153,7 @@ global:
 scrape_configs:
   - job_name: 'prometheus'
     static_configs:
-      - targets: ['backend_server:4000']
+      - targets: ['backend_server:5000']
 ```
 ## Run the Application
 1. Start all services using Docker Compose:
@@ -164,4 +164,4 @@ docker-compose up --build
 This will start the Docker containers for both the backend and frontend services.
 
 
-By following the above steps, you should be able to set up, run, and manage your live streaming app with chat functionality using Docker images from Docker Hub.
+By following the above steps, you should be able to set up, run, and manage your live streaming app with chat functionality using the Docker container.
