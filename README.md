@@ -45,7 +45,7 @@ Before you begin, ensure you have met the following requirements:
 
 1. **Clone the repository**
     ```sh
-    git clone https://github.com/akashyap25/Live-Streaming.git
+    git clone https://github.com/tarunbisht-24/live-streaming.git
     ```
 
 2. **Backend Setup**
@@ -61,6 +61,7 @@ Before you begin, ensure you have met the following requirements:
     PORT=5000
     MONGO_URI=mongodb+srv://<username>:<password>@cluster0.mongodb.net/<dbname>?retryWrites=true&w=majority
     JWT_SECRET=your-jwt-secret
+    VITE_SERVER=http://localhost:5000
     ```
 
     Run the backend server:
@@ -99,39 +100,65 @@ Before you begin, ensure you have met the following requirements:
 
 ## Docker
 
- To run the application using Docker, you can pull the pre-built Docker images from Docker Hub. Here are the steps to fetch and run the Docker images:
+### Dockerfile for Backend
+Create a Dockerfile in the backend directory:
 
-
-1. **Pull Docker Images**
-  ```sh
-  docker pull kashyap2508/divine_backend:tagname
-  docker pull kashyap2508/divine_frontend:latest
-  ```
-
-2. **Create Docker Compose File**
-Create a `docker-compose.yml` file in the root directory of your project:
-
-```yaml
-version: '3'
-services:
-  backend:
-    image: kashyap2508/divine_backend:tagname
-    ports:
-      - "5000:5000"
-    environment:
-      MONGO_URI: mongodb+srv://<username>:<password>@cluster0.mongodb.net/<dbname>?retryWrites=true&w=majority
-      JWT_SECRET: your-jwt-secret
-
-  frontend:
-    image: kashyap2508/divine_frontend:latest
-    ports:
-      - "5173:5173"
+```bash
+FROM node:12
+WORKDIR /usr/src/app
+COPY package*.json ./
+RUN npm install
+COPY . .
+CMD ["npm", "start"]
 ```
+### Docker Compose File
+Create a docker-compose.yml in the root directory:
+```bash
+version: "3.9"
+services:
+  rtmp:
+    build: ./rtmp
+    ports:
+      - "1935:1935"
+      - "8080:8080"
+    container_name: rtmp_server
+    volumes:
+      - ./data:/tmp/hls
+  
+  backend:
+    build: ./backend
+    container_name: backend_server
+    environment:
+      - PORT=4000
+      - MONGO_URI=${MONGO_URI}
+      - JWT_SECRET=${JWT_SECRET}
+    ports:
+      - "4000:4000"
+    depends_on:
+      - rtmp
 
-3. **Run Docker Containers**
-In the root directory of your project, run:
-```sh
-docker-compose up
+  prometheus:
+    image: prom/prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+```
+### Prometheus Configuration
+Create a prometheus.yml file in the root directory:
+```bash
+global:
+  scrape_interval: 5s
+
+scrape_configs:
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['backend_server:4000']
+```
+## Run the Application
+1. Start all services using Docker Compose:
+```bash 
+docker-compose up --build
 ```
 
 This will start the Docker containers for both the backend and frontend services.
